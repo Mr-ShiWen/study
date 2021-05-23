@@ -97,7 +97,7 @@ Logger被指定为实体，获取方法：
 A：off         最高等级，用于关闭所有日志记录。
 B：fatal       指出每个严重的错误事件将会导致应用程序的退出。
 C：error      指出虽然发生错误事件，但仍然不影响系统的继续运行。
-D：warm     表明会出现潜在的错误情形。
+D：warn     表明会出现潜在的错误情形。
 E：info         一般和在粗粒度级别上，强调应用程序的运行全程。
 F：debug     一般用于细粒度级别上，对调试应用程序非常有帮助。
 G：all           最低等级，用于打开所有日志记录。
@@ -569,9 +569,23 @@ public class User implements Serializable {
 
 #### 注意
 
-​		其实可以用一个主配置文件就好，但这样 mapper 标签必须具体写，造成主配置文件内容过多。通过从配置文件配置mapper使得主配置文件更加简洁清晰，主配置文件的mapper标签只需要引用从配置即可。
+*  其实可以用一个主配置文件就好，但这样 mapper 标签必须具体写，造成主配置文件内容过多。通过从配置文件配置mapper使得主配置文件更加简洁清晰，主配置文件的mapper标签只需要引用从配置即可。
 
-​		一般来说，一个从配置文件写一个dao的数据交互sql
+​		一般来说，一个从配置文件写一个dao的数据交互sql。
+
+* 包装为普通类的bean时，如果没有指明resultMap，那查询结果只能把那些在bean中含有同名字段的列的数据保存在bean，不同名的不会保存。如果指明resultMap，那查询结果到bean就可以根据resultMap的匹配来保存。
+
+* 包装为基本类型时，只会把第一个数据放到基本类型里面去，如果类型匹配或者转换不成功，就返回，否则抛出异常。
+
+* 解决列与bean属性不同命的方法还可以通过 `select  xx as yy` 来实现。
+
+* mapper.xml文件里元素的id不能带有`.` 号，否则运行时报错。
+
+* 从配置文件的sql元素如果需要多个参数，可以在接口方法的参数上加上 `@param  ` 来给参数带上名字，好对应sql中占位符的名字填入参数。参数过多的话推荐放在bean里传过来，sql语句的占位符通过自身名称匹配bean中属性名获取bean中参数以替换自身。
+
+  
+
+
 
 ### 4、使用
 
@@ -708,7 +722,41 @@ public void testUpdateUser() throws IOException {
 
 ## 映射器
 
-上一节的使用，只是说了xml映射器的一种使用方法（通过sqlSession使用）。其实映射器的种类及其用法还有其他的，见下图
+​		上一节的使用，只是说了xml映射器的一种使用方法（通过sqlSession使用）。但这种方式是不推荐的，因为可能有类型问题，比如sql元素需要Integer的入参，但是实际传入的是String，这在编译时发现不了但运行时会抛出异常。其次其表达力也比较弱。
+
+​		为了更好的进行数据库交互，尝尝通过一个接口mapper来执行sql元素。一个接口mapper对应一个sql元素池（由mapper.xml文件或者接口得信息来生成），接口mapper的方法对应sql元素池的一个sql元素。执行时调用接口方法，即可获取对应sql元素来执行然后返回结果了。
+
+
+
+​		<u>sql元素的输入是占位符的值，用于补全sql；sql元素的输出是封装了执行结果的bean列表。</u>
+
+​		<u>接口mapper的方法是对sql元素的简单封装：入参对应sql元素占位符，出参要么原样返回（List< Bean>），要么取出元素再返回（Bean，这要求sql元素执行结果的List长度为1，否则报错，因为List长度不为1，说明执行结果有多行元素，不符合要求）。</u>
+
+
+
+​       接口mapper方法的入参类型不需要和sql元素的入参类型对应（sql元素入参类型不会产生任何影响，mybatis会获取实参类型），只要实入参能匹配好占位符就行。
+
+​	   接口mapper方法的出参类型是`Bean`或者`List< Bean> `  ，sql元素的出参类型是Bean。因为mapper方法的出参表示最终返回结果，而sql元素的出参表示查询结果每一行的包装类型（sql语句执行后把每一行元素包装后放在List里面返回，再根据需要决定返回一个元素还是整个List）。这是mybatis指定sql语句执行的结果包装类型与返回类型的途径。
+
+
+
+**静态sql入参注意：**
+
+   sql元素的语句占位符只有一个，那么入参无论有无名字都可以，反正肯定放在这个占位符上。
+
+   sql元素的语句占位符有多个时：
+
+​		如果占位符没有名称（即名称是param1，param2之类），那么传过来的参数有无名称都可以，按占位符指定顺序替换，即param2表示第二个参数。
+
+​		如果占位符有名称，那么传过来的要么是一个普通类的bean（属性名对应占位符名），要么是带有名称的实参（接口方法的参数使用`@Param`注解）。通过名称对应来替换占位符。
+
+
+
+**动态sql：**
+
+​		动态sql只有接口，是根据接口生成不完备的sql元素池的。执行时传入sql语句，结合sql元素来执行的，其sql元素不需要入参设定了（因为执行时会传入最终的sql语句），只需要关注其出参类型即可。sql元素出参与接口mapper出参的关系前面已经说了，sql元素是通过接口mapper生成的，mybatis会给我们做这个工作。
+
+
 
 ![MyBatis_Mapper](http://typora-imges.oss-cn-beijing.aliyuncs.com/img/MyBatis_Mapper.png)
 
@@ -728,5 +776,101 @@ public void testUpdateUser() throws IOException {
 
 
 
+## 注意
 
+### Optional
+
+​		版本 3.5.0以上才支持Optional对象，也就是查询返回Entity变成返回Optional< Entity>
+
+关于optional的介绍看这里：https://juejin.cn/post/6844903960050925581
+
+
+
+### Dynamic Sql
+
+以下是使用dynamic sql的用法：
+
+```java
+
+    public void selectById() throws IOException {
+        
+        InputStream in= Resources.getResourceAsStream("SqlMapConfig.xml");
+        SqlSessionFactory sqlSessionFactory=new SqlSessionFactoryBuilder().build(in);
+        SqlSession sqlSession=sqlSessionFactory.openSession();
+        AppleMapper mapper = sqlSession.getMapper(AppleMapper.class);
+        
+
+        List<BasicColumn> fields = new ArrayList<>();
+        fields.add(getCount());
+        fields.add(getSumPrice());
+        fields.add(SqlBuilder.divide(getSumPrice(),getCount()).as("avgPrice"));
+
+       //select里面可以接受多个BasicColumn，也可以接受一个List<BasicColumn>
+       //每个BasicColumn表示一个查询列（如id或者sum（price））
+       //SqlColumn与BindableColumn都可以用作BasicColumn，具体看他们的继承关系
+        SelectStatementProvider selectStatementProvider = select(fields)
+                .from(apple)
+                .build()
+                .render(RenderingStrategies.MYBATIS3);
+        
+        Map<String, Object> stringObjectMap = mapper.selectOneMappedRow(selectStatementProvider);
+        System.out.println(stringObjectMap);
+        
+    }
+
+
+ 		public BindableColumn<BigDecimal> getSumPrice(){
+        return SqlBuilder.sum(price).as("sumPrice");
+    }
+
+    public BindableColumn<Long> getCount(){
+        return SqlBuilder.count(id).as("count");
+    }
+```
+
+
+
+# Mockito
+
+用于模拟对象，我们可以设置这个模拟对象的方法的输入，输出，当调用的时候就按照这个输入输出来。
+
+如：
+
+```java
+@Test
+	public void when_thenReturn(){
+		//mock一个Iterator类
+		Iterator iterator = mock(Iterator.class);
+		//预设当iterator调用next()时第一次返回hello，第n次都返回world
+		when(iterator.next()).thenReturn("hello").thenReturn("world");
+		//使用mock的对象
+		String result = iterator.next() + " " + iterator.next() + " " + iterator.next();
+		//验证结果
+		assertEquals("hello world world",result);
+	}
+```
+
+上面设置了两次返回结果，所以，第一次调用会返回hello，后面所有调用返回world
+
+
+
+当用参数匹配器设置参数时，需要所用的参数都用参数匹配值设置，否则出错
+
+```java
+    @Test
+    public void when_thenThrow1() throws IOException {
+        //anfInt()来自参数匹配值，1也来自参数匹配器
+        when(mockCat.map(anyInt(),eq(1))).thenReturn("h");
+
+        String map1=mockCat.map(1,1);
+        String map2=mockCat.map(2,1);
+        String map3=mockCat.map(3,1);
+
+        System.out.println(map1);
+        System.out.println(map2);
+        System.out.println(map3);
+				//验证调用次数
+        verify(mockCat,times(1)).map(1,1);
+    }
+```
 
