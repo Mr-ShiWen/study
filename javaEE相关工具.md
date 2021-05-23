@@ -50,7 +50,6 @@ Maven中存在三种生命周期：clean、default、site，分别用于清理�
 * 查看状态（还没有提交的更改）：git status
 * 查看变更的地方：git diff  xxx
 * 把文件添加到暂存区：git add xxx
-* 把文件从版本库删除：git rm xxx
 * 把暂存区全部的文件提交：git commit  -m "你的评论，以便看出做了哪些修改"
 
 
@@ -81,13 +80,21 @@ Maven中存在三种生命周期：clean、default、site，分别用于清理�
 
 ### 修改撤销
 
-* 撤销暂存区（add）的修改，放回工作区：git reset head xxx 
-
+* 撤销暂存区（add之后）的修改，放回工作区：git reset head xxx 
 * 撤销工作区的修改：git  checkout  --xxx  //回到最近的 add 或者 commit（add不存在时） 的状态
 
-  
 
-* 删除文件：git rm xxx   --->    git commit -m "你的评论，以便看出做了哪些修改"
+
+
+### 删除文件
+
+* 删除工作区文件并放入暂存区：git rm xxx  
+
+
+
+### 重命名文件
+
+* 重命名工作区文件，并放入暂存区：git mv [file-original] [file-renamed] 
 
 
 
@@ -99,7 +106,7 @@ Maven中存在三种生命周期：clean、default、site，分别用于清理�
 
 
 
-注意：仓库虽然关联了，但是如果需要pushu或者pull，还需要设置分支的关联
+注意：仓库虽然关联了，但是如果需要push或者pull，还需要设置分支的关联
 
 
 
@@ -110,8 +117,9 @@ Maven中存在三种生命周期：clean、default、site，分别用于清理�
 * 创建分支：git branch xxx      //创建名为xxx的分支
 * 切换分支：git switch xxx   或者  git  checkout xxx   //切换到xxx分支
 * 创建并切换分支：git switch -c xxx   或者  git checkout  -b xx   //创建名为xxx分支，并切换到xxx分支。相当于上面两条命令
-* 创建一个跟踪远程xxx分支的同名分支：git switch --track remotes/origin/xxx
+* 创建一个跟踪远程xxx分支的同名本地分支：git switch --track remotes/origin/xxx
 * 查看分支：git branch      //列出所有分支，当前分支前面会标一个 * 号
+* 查看远程分支：git branch -a
 * 关联远程分支：git branch --set-upstream-to=origin/远程分支名  本地分支名
 
 
