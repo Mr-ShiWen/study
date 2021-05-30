@@ -71,7 +71,7 @@ javap   -verbose   Test   //-verbose表示显示的意思
 * 进入服务器（指定端口号）：mysql -h ip地址 -u 用户名 -p密码 -P 端口号 //【mysql ip 用户名 密码 端口号】
             其中，[-h ip地址] 如果不填就默认为localhost，[-P 端口号] 如果不填就默认3306
 
-        **注意：-p密码 一定是连着写的，或者只写-p。否则-p与密码存在空格的话，cmd认为你的密码是数据库名（连接上服务后选取哪个数据库）**
+    **注意：-p密码 一定是连着写的，或者只写-p。否则-p与密码存在空格的话，cmd认为你的密码是数据库名（连接上服务后选取哪个数据库）**
         
 * 导出数据库：mysqldump -u 用户名 -p 数据库名 > 导出的文件名
              如：mysqldump -u root -p -P3307 gaokao>D:\mysql_outData\gaokao_out.sql
