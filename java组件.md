@@ -438,6 +438,12 @@ Mybatis有自己的日志组件，但与Log4j类似，需要在classpath 下创�
 
 ![Mybatis_Constructure](http://typora-imges.oss-cn-beijing.aliyuncs.com/img/Mybatis_Constructure.png)
 
+除了这种方式使用外，还可以通过接口来使用，接口是基于sqlSession的，更加易于使用。
+
+原理上：mybatis，通过配置文件，建立连接，注册sql元素，注册接口。
+
+使用时，可以直接使用mybatis执行sql元素，也可以通过接口来执行sql元素。
+
 
 
 ## 原始使用
@@ -465,6 +471,8 @@ Mybatis有自己的日志组件，但与Log4j类似，需要在classpath 下创�
 
 
 ### 2、创建实体类
+
+主要用于sql元素执行结果的封装
 
 ```java
 package com.ben.domain;
@@ -562,6 +570,14 @@ public class User implements Serializable {
 
 </mapper>
 ```
+
+
+
+从配置文件主要是配置sql语句，配置返回类型时，可能bean与数据库字段名不同，解决方式：
+
+   1、select语句里用别名
+
+   2、使用ResultMap：https://www.cnblogs.com/rollenholt/p/3365866.html
 
 
 
@@ -726,21 +742,44 @@ public void testUpdateUser() throws IOException {
 
 ​		为了更好的进行数据库交互，尝尝通过一个接口mapper来执行sql元素。一个接口mapper对应一个sql元素池（由mapper.xml文件或者接口得信息来生成），接口mapper的方法对应sql元素池的一个sql元素。执行时调用接口方法，即可获取对应sql元素来执行然后返回结果了。
 
+​        **mybatis会自动实现mapper接口，接口的具体实现还是基于sqlSession的，即接口是建立在原始使用方式之上的。**
 
 
-### 静态mapper接口与动态mapper接口
+
+### 接口的配置
 
 ​		mapper分为静态mapper与动态mapper。但结构上是一样的，即mapper与sql元素池的对应关系不变，不同的地方就是静态mapper的sql写死了，只能传入参数替换占位符，而动态mapper是传入整个sql语句，灵活性更大。
 
 * **构建静态mapper有两种方式**：
 
-​			1、普通mapper接口 与 mapper.xml文件。加载xml即可，会自动匹配上接口的。
+1、普通mapper接口 与 mapper.xml 文件。mybatisConfig.xml里面加载xml即可，mybatis会自动寻找相应接口来实现的。
 
-​			2、带有sql注解的mapper接口。加载接口即可，会生成对应sql元素池的。
+​        注意mapper接口全名与mapper.xml里的namespace对应，mapper接口方法名与mapper.xml里sql元素id名字对应。
+
+
+
+2、带有sql注解的mapper接口。加载接口即可，mybatis会自动实现该接口的，会生成对应sql元素池的。
+
+
 
 * **构建动态mapper只有一种种方式**：
 
-​			1、mapper接口。加载接口即可，会生成对应sql元素池的。
+​			1、mapper接口。加载接口即可，执行时传入sql元素即可，不需要事先往mybatis注册sql元素。
+
+
+
+具体的配置方法：
+
+```xml
+    <mappers>
+        <mapper resource="mybatis/mappers/StudentMapper.xml"/>
+        <mapper class="com.example.demo.dao.TeacherMapper"/>
+    </mappers>
+```
+
+
+
+
 
 **注意**：
 
@@ -764,6 +803,26 @@ public void testUpdateUser() throws IOException {
 |                                            |                    |
 
 sql里，date保存日期，如 2021-07-10。 datetime、timestamp保存日期时间，如 2021-07-10 12:42:53。
+
+
+
+### 接口的获取与使用
+
+接口构建完成后（在mybatis获取配置文件后自动实现相应的接口，实现类在mybatis内部），需要获取接口再使用。比如构建了UserDao接口，那么获取接口的方式：
+
+```java
+        //1.读取配置文件
+        InputStream in= Resources.getResourceAsStream("mybatis/MyBatisConfig.xml");
+
+        //2.创建SqlSessionFactory工厂
+        SqlSessionFactory sqlSessionFactory=new SqlSessionFactoryBuilder().build(in);
+
+        //3.使用工厂生产SqlSession对象
+        SqlSession sqlSession=sqlSessionFactory.openSession();
+
+        //4.获取接口，这里实际类型是实现类，直接使用即可
+        UserDao userDaoMapper = sqlSession.getMapper(UserDao.class);
+```
 
 
 
@@ -807,7 +866,7 @@ sql里，date保存日期，如 2021-07-10。 datetime、timestamp保存日期�
 
 
 
-![MyBatis_Mapper](http://typora-imges.oss-cn-beijing.aliyuncs.com/img/MyBatis_Mapper.png)
+![MyBatis映射器](http://typora-imges.oss-cn-beijing.aliyuncs.com/img/MyBatis映射器.jpg)
 
 详见：https://www.cnblogs.com/nuccch/p/9056482.html#%E9%85%8D%E7%BD%AExml%E6%98%A0%E5%B0%84%E5%99%A8
 
@@ -977,6 +1036,8 @@ public class MyBatisTest {
 
 参考：https://juejin.cn/post/6844903982582743048
 
+用于生成相应的mapper.xml文件和接口，以及entity
+
 ### 方式一：maven插件生成
 
 注意：在pom.xml里面把 generator.xml文件绑定在生成器插件上（即在生成器上面指明generator.xml文件地址），再在generator.xml文件里面配置生成规则，最后运行插件生成即可
@@ -999,11 +1060,24 @@ public class MyBatisTest {
 <dependency>
 			<groupId>org.mybatis.spring.boot</groupId>
 			<artifactId>mybatis-spring-boot-starter</artifactId>
-			<version>1.3.2</version>
+			<version>2.2.0</version>
 </dependency>
 ```
 
-主要是为了通过AutoConfiguredMapperScannerRegistrar这个类来扫描mapper
+主要是为了通过AutoConfiguredMapperScannerRegistrar这个类来自动创建 SqlSession（SqlSessionTemplate）。但是配置文件还是需要的，因此，我们需要在application.yml里面配置相应的数据源与配置路径：
+
+```yml
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3308/mybatis?serverTimezone=GMT
+    username: root
+    password: 199402160579shch
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+mybatis:
+  #主配置文件路径,从配置文件路径在主配置文件里面配置就行
+  config-location: classpath:/mybatis/MyBatisConfig.xml  
+```
 
 ​		这样不用手动生成 sqlsession 、mapper了。但需要我们在mapper接口上添加@Mapper注解。如果有需要配合mapper.xml的，在application.peoperties中，配置下面语句就可以了，否则mapper接口找不到匹配得mapper.xml文件。这种做法不用手动生成sqlsession，就没必要配主配置文件了
 
@@ -1165,7 +1239,7 @@ json字符串可以转换成对象（JSONObject）或者数组（JSONArray）：
 
 总体如下图所示：
 
-![ThriftPrinciple](http://typora-imges.oss-cn-beijing.aliyuncs.com/img/ThriftPrinciple.png)
+![Thrift原理](http://typora-imges.oss-cn-beijing.aliyuncs.com/img/Thrift原理.jpg)
 
 
 
@@ -1178,7 +1252,9 @@ json字符串可以转换成对象（JSONObject）或者数组（JSONArray）：
 
 ## 使用步骤
 
-0、引入依赖（注意依赖版本需要和生成代码的thrift版本一致）
+**1、引入依赖**
+
+（注意依赖版本需要和生成代码的thrift版本一致）
 
 ```xml
 <dependency>
@@ -1188,13 +1264,153 @@ json字符串可以转换成对象（JSONObject）或者数组（JSONArray）：
 </dependency>
 ```
 
-1、编写thrift文件
 
-2、把thrift文件生成实际语言的代码，命令：thrift -gen java Hello.thrift
 
-3、编写接口实现类
+**2、编写thrift文件**
 
-4、编写服务端、客户端代码，并运行即可
+相关格式见：https://blog.csdn.net/lijinqi1987/article/details/77771066
+
+
+
+**3、编译thrift文件**
+
+​     *生成接口、相应的Client（客户端调用代码）、相应的Processor（用于服务端处理远程调用请求）*
+
+   方法一：cmd命令
+
+​      1.1 先安装thrift并配置好环境
+
+​      1.2 thrift -gen java Hello.thrift 或者 thrift -gen java D:\Thrift\auth.thrift
+
+   方法二：maven插件（推荐）
+
+​      2.1 先安装thrift并配置好环境变量
+
+​      2.2 再安装maven插件
+
+```xml
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.thrift.tools</groupId>
+                <artifactId>maven-thrift-plugin</artifactId>
+                <version>0.1.11</version>
+                <configuration>
+                    <!--thrift.exe路径，环境变量配置好了这里就没必要再写了-->
+                    <!--<thriftExecutable>/usr/local/bin/thrift</thriftExecutable>-->
+                    <thriftSourceRoot>src/main/resources/thrift</thriftSourceRoot>
+                    <outputDirectory>src/main/java</outputDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>thrift-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <!--<execution>-->
+                    <!--<id>thrift-test-sources</id>-->
+                    <!--<phase>generate-test-sources</phase>-->
+                    <!--<goals>-->
+                    <!--<goal>testCompile</goal>-->
+                    <!--</goals>-->
+                    <!--</execution>-->
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>8</source>
+                    <target>8</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+```
+
+   2.3 使用thrift插件一键编译就行。
+
+
+
+**3、编写接口实现类**
+
+
+
+**4、编写服务端、客户端代码，并运行即可**
+
+服务端代码：
+
+```java
+public class App {
+    private static int port=8888;
+
+    public static void main(String[] args)  {
+        try {
+            //服务端构建
+            TServerSocket tServerSocket=new TServerSocket(port);
+            TBinaryProtocol.Factory proFactory = new TBinaryProtocol.Factory();
+            TProcessor processor= new HelloService.Processor<>(new HelloServiceImpl());
+
+            TThreadPoolServer.Args args1=new TThreadPoolServer.Args(tServerSocket);
+            args1.inputProtocolFactory(proFactory);
+            args1.processor(processor);
+
+            TServer tServer=new TThreadPoolServer(args1);
+
+            //服务端运行
+            System.out.println("正在运行tServer...");
+            tServer.serve();
+            System.out.println("tServer启动完成");
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+}
+
+```
+
+
+
+客户端代码：
+
+```java
+public class App {
+    private static int port=8888;
+
+    public static void main(String[] args) {
+        try {
+            //客户端构建
+            TTransport tTransport=new TSocket("localhost",port);
+            tTransport.open();
+            TProtocol tProtocol=new TBinaryProtocol(tTransport);
+
+            HelloService.Client client = new HelloService.Client(tProtocol);
+
+            //客户端使用
+            String str = client.helloString("hello");
+            System.out.println(str);
+
+            Student student = client.getStudent();
+            System.out.println(student);
+
+            System.out.println("调用完毕");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+}
+```
+
+
+
+
+
+
 
 
 
@@ -1206,5 +1422,568 @@ json字符串可以转换成对象（JSONObject）或者数组（JSONArray）：
 
 
 
+# Dubbo
 
+参考：
+
+https://segmentfault.com/a/1190000019896723
+
+https://dubbo.apache.org/zh/docs/v2.7/user/configuration/
+
+## 使用
+
+总体形式上dubbo仅仅是创建相关bean就能达到发布接口或者订阅接口的目的。这是利用了spring提供的扩展。
+
+
+
+### 相关依赖
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.example</groupId>
+    <artifactId>dubboServer</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+        <spring.version>5.1.6.RELEASE</spring.version>
+        <curator.version>5.1.0</curator.version>
+    </properties>
+
+    <dependencies>
+        <!--spring 核心包-->
+        <!-- spring start -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-core</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-oxm</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-tx</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-aop</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context-support</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>3.8.1</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.alibaba/dubbo -->
+        <dependency>
+            <groupId>org.apache.dubbo</groupId>
+            <artifactId>dubbo</artifactId>
+            <version>3.0.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.zookeeper</groupId>
+            <artifactId>zookeeper</artifactId>
+            <version>3.6.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.sgroschupf</groupId>
+            <artifactId>zkclient</artifactId>
+            <version>0.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>4.1.32.Final</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-framework</artifactId>
+            <version>${curator.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-recipes</artifactId>
+            <version>${curator.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-x-discovery</artifactId>
+            <version>${curator.version}</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>1.2.50</version>
+        </dependency>
+
+    </dependencies>
+</project>
+```
+
+
+
+### xml方式
+
+#### 1、加载相关依赖
+
+<a href="#相关依赖">见相关依赖</a>
+
+
+
+#### 2、编写xml配置
+
+##### 服务提供端
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans        http://www.springframework.org/schema/beans/spring-beans.xsd        http://code.alibabatech.com/schema/dubbo        http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+http://code.alibabatech.com/schema/dubbo ">
+
+    <!--当前项目在整个分布式架构里面的唯一名称，计算依赖关系的标签-->
+    <dubbo:application name="provider" owner="sihai" >
+        <dubbo:parameter key="qos.enable" value="true"/>
+        <dubbo:parameter key="qos.accept.foreign.ip" value="false"/>
+        <dubbo:parameter key="qos.port" value="55555"/>
+        <dubbo:parameter key="register-mode" value="instance"/>
+    </dubbo:application>
+
+    <dubbo:monitor protocol="registry"/>
+
+    <!--dubbo这个服务所要暴露的服务地址所对应的注册中心-->
+    <!--<dubbo:registry address="N/A"/>-->
+    <dubbo:registry address="zookeeper://localhost:2181"  check="false" timeout="10000"/>
+
+    <!--当前服务发布所依赖的协议；webserovice、Thrift、Hessain、http-->
+    <dubbo:protocol name="dubbo" port="20880"/>
+
+
+    <!--服务发布的配置，需要暴露的服务接口-->
+    <dubbo:service
+            interface="com.sihai.dubbo.provider.service.ProviderService"
+            ref="providerService"/>
+
+    <dubbo:service
+            interface="com.sihai.dubbo.provider.service.BookService"
+            ref="bookService"/>
+
+    <!--Bean bean定义-->
+    <bean id="providerService" class="com.sihai.dubbo.provider.service.ProviderServiceImpl"/>
+    <bean id="bookService" class="com.sihai.dubbo.provider.service.BookServiceImpl"/>
+
+</beans>
+```
+
+
+
+##### 服务消费端
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans        http://www.springframework.org/schema/beans/spring-beans.xsd        http://code.alibabatech.com/schema/dubbo        http://code.alibabatech.com/schema/dubbo/dubbo.xsd">
+
+    <!--当前项目在整个分布式架构里面的唯一名称，计算依赖关系的标签-->
+    <dubbo:application name="consumer" owner="sihai"/>
+
+    <!--dubbo这个服务所要暴露的服务地址所对应的注册中心-->
+    <!--点对点的方式-->
+<!--    <dubbo:registry address="N/A" />-->
+    <dubbo:registry address="zookeeper://localhost:2181"  check="true"/>
+
+    <!--生成一个远程服务的调用代理-->
+    <!--点对点方式-->
+<!--    <dubbo:reference id="providerService"-->
+<!--                     interface="ProviderService"-->
+<!--                     url="dubbo://192.168.56.1:20880/ProviderService"/>-->
+
+    <dubbo:reference id="providerService"
+                     interface="com.sihai.dubbo.provider.service.ProviderService"
+                     />
+
+    <dubbo:reference id="bookService"
+                     interface="com.sihai.dubbo.provider.service.BookService"
+                     />
+
+</beans>
+```
+
+
+
+##### 中间端（既消费又服务）
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans        http://www.springframework.org/schema/beans/spring-beans.xsd        http://code.alibabatech.com/schema/dubbo        http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+http://code.alibabatech.com/schema/dubbo ">
+
+    <!--当前项目在整个分布式架构里面的唯一名称，计算依赖关系的标签-->
+    <dubbo:application name="provider" owner="sihai" >
+        <dubbo:parameter key="qos.enable" value="true"/>
+        <dubbo:parameter key="qos.accept.foreign.ip" value="false"/>
+        <dubbo:parameter key="qos.port" value="55555"/>
+        <dubbo:parameter key="register-mode" value="instance"/>
+    </dubbo:application>
+
+    <dubbo:monitor protocol="registry"/>
+
+    <!--dubbo这个服务所要暴露的服务地址所对应的注册中心-->
+    <!--<dubbo:registry address="N/A"/>-->
+    <dubbo:registry address="zookeeper://localhost:2181"  check="false" timeout="10000"/>
+
+    <!--当前服务发布所依赖的协议；webserovice、Thrift、Hessain、http-->
+    <dubbo:protocol name="dubbo" port="20880"/>
+
+
+    <!--服务发布的配置，需要暴露的服务接口-->
+    <dubbo:service
+            interface="com.sihai.dubbo.provider.service.ProviderService"
+            ref="providerService"/>
+
+    <dubbo:service
+            interface="com.sihai.dubbo.provider.service.BookService"
+            ref="bookService"/>
+
+    <!--Bean bean定义-->
+    <bean id="providerService" class="com.sihai.dubbo.provider.service.ProviderServiceImpl">
+        <property name="cat" ref="myCat"></property>
+    </bean>
+    <bean id="bookService" class="com.sihai.dubbo.provider.service.BookServiceImpl"/>
+
+    <dubbo:reference id="myCat"
+                     interface="com.sihai.dubbo.provider.hello.Cat"
+    />
+
+
+</beans>
+```
+
+
+
+#### 3、启动
+
+##### 服务提供端
+
+```java
+package com.sihai.dubbo.provider;
+
+import com.sihai.dubbo.provider.config.DubboConfiguration;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import java.io.IOException;
+
+public class App {
+    public static void main( String[] args ) throws IOException {
+        //加载xml配置文件启动
+        ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("META-INF/spring/provider.xml");
+        context.start();
+        System.in.read(); // 按任意键退出
+    }
+}
+
+```
+
+##### 服务消费端
+
+```java
+package com.sihai.dubbo.consumer;
+
+import com.sihai.dubbo.consumer.config.ConsumerConfiguration;
+import com.sihai.dubbo.provider.service.BookService;
+import com.sihai.dubbo.provider.service.ProviderService;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import java.io.IOException;
+
+public class App {
+    public static void main( String[] args ) throws IOException {
+
+        ClassPathXmlApplicationContext context=new ClassPathXmlApplicationContext("consumer.xml");
+        context.start();
+        ProviderService providerService = (ProviderService) context.getBean("providerService");
+        BookService bookService = (BookService)context.getBean("bookService");
+
+        String str = providerService.SayHello("hello world!");
+        String bookStr = bookService.getBook();
+        
+        System.out.println(str);
+        System.out.println(bookStr);
+        
+    }
+}
+
+```
+
+
+
+
+
+### 注解方式
+
+#### 1、加载相关依赖
+
+<a href="#相关依赖">见相关依赖</a>
+
+
+
+#### 2、编写配置类与相关配置信息
+
+##### 服务提供端
+
+配置类
+
+```java
+package com.sihai.dubbo.provider.config;
+
+import org.apache.dubbo.config.spring.context.annotation.EnableDubbo;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+
+@Configuration
+@EnableDubbo(scanBasePackages = "com.sihai.dubbo.provider.service")//扫描暴露接口
+@PropertySource("classpath:/dubbo-provider.properties") //相关配置信息
+public class DubboConfiguration {
+}
+
+```
+
+在对应的需要暴露的接口实现类上加上@Service注解，注意是dubbo的@Service注解，不是spring的@Service注解
+
+```java
+package com.sihai.dubbo.provider.service;
+
+import com.alibaba.fastjson.JSON;
+import com.sihai.dubbo.provider.entity.Book;
+import org.apache.dubbo.config.annotation.Service;
+
+
+@Service
+public class BookServiceImpl implements BookService {
+
+    public String getBook() {
+        Book book = new Book(1, "资治通鉴", "司马光", 100);
+        String bookStr = JSON.toJSONString(book);
+        return bookStr;
+    }
+
+}
+
+```
+
+properties中的相关配置信息
+
+```properties
+# dubbo-provider.properties
+dubbo.application.name=annotation-provider
+dubbo.registry.address=zookeeper://localhost:2181
+dubbo.protocol.name=dubbo
+dubbo.protocol.port=20880
+```
+
+
+
+##### 服务消费端
+
+配置类
+
+```java
+package com.sihai.dubbo.consumer.config;
+
+import org.apache.dubbo.config.spring.context.annotation.EnableDubbo;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+
+
+@Configuration
+//@EnableDubbo与@ComponentScan配合，扫描需要远程调用的接口
+@EnableDubbo(scanBasePackages = "com.sihai.dubbo.consumer.service")
+@ComponentScan(value = {"com.sihai.dubbo.consumer.service"})
+@PropertySource("classpath:/dubbo-consumer.properties")
+public class ConsumerConfiguration {
+}
+
+```
+
+远程调用接口，加上@Reference注解，注意这里需要配合@Component注解使用，且@Reference只能用在属性上
+
+```java
+package com.sihai.dubbo.consumer.service;
+
+import com.sihai.dubbo.provider.service.BookService;
+import com.sihai.dubbo.provider.service.ProviderService;
+import org.apache.dubbo.config.annotation.Reference;
+import org.springframework.stereotype.Component;
+
+@Component
+public class ConsumerAnnotationService {
+    @Reference
+    BookService bookService;
+    @Reference
+    ProviderService providerService;
+}
+
+```
+
+properties中的相关配置信息
+
+```properties
+# dubbo-consumer.properties
+dubbo.application.name=annotation-consumer
+dubbo.registry.address=zookeeper://127.0.0.1:2181
+dubbo.consumer.timeout=3000
+```
+
+
+
+#### 3、启动
+
+##### 服务提供端
+
+```java
+package com.sihai.dubbo.provider;
+
+import com.sihai.dubbo.provider.config.DubboConfiguration;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import java.io.IOException;
+
+public class App {
+    public static void main( String[] args ) throws IOException {
+        //加载配置类启动
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(DubboConfiguration.class);
+        context.start();
+        System.in.read(); // 按任意键退出
+    }
+}
+
+```
+
+
+
+##### 服务消费端
+
+```java
+package com.sihai.dubbo.consumer;
+
+import com.sihai.dubbo.consumer.config.ConsumerConfiguration;
+import com.sihai.dubbo.provider.service.BookService;
+import com.sihai.dubbo.provider.service.ProviderService;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import java.io.IOException;
+
+public class App {
+    public static void main( String[] args ) throws IOException {
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ConsumerConfiguration.class);
+        context.start();
+        
+        ProviderService providerService = (ProviderService) context.getBean("providerService");
+        BookService bookService = (BookService)context.getBean("bookService");
+
+        String str = providerService.SayHello("hello world!");
+        String bookStr = bookService.getBook();
+
+        System.out.println(str);
+        System.out.println(bookStr);
+    }
+}
+
+```
+
+
+
+
+
+
+
+## dubbo使用问题
+
+1、zookeeper连接不上，可能是zookeeper服务不稳定，延长超时时间就行
+
+```xml
+    <dubbo:registry address="zookeeper://localhost:2181" check="false" timeout="10000"/>
+```
+
+
+
+## 原理解析
+
+参考：
+
+http://blog.itpub.net/70000181/viewspace-2774479/
+
+
+
+### dubbo spi
+
+本质上是通过配置文件来决定创建接口的实现类的bean。这样不用通过代码显式创建bean，方便后续的扩展。
+
+
+
+源码分析见参考资料。
+
+获取相应的bean时候，先检查记录获取holder，如果没有这个bean再通过createExtension获取（先检查是否存在相应bean，不存在就创建。对这个bean再进行ioc与aop，ioc这里是说依赖注入，aop这里是说把bean装进包装类并返回这个包装类，包装类和目标类实现相同的接口或者包装类继承目标类，包装类实质可以看做是目标类的代理）。
+
+具体如下：
+
+![spi 原理](http://typora-imges.oss-cn-beijing.aliyuncs.com/img/spi 原理.jpg)
 
