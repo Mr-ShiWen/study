@@ -36,7 +36,7 @@ func main() {
 * step1：设置环境变量 GO111MODULE为off 或者auto（使得import通过 GOPATH 来加载 ），具体在cmd上执行：
 
   ```txt
-go env -w GO111MODULE=off
+  go env -w GO111MODULE=off
   ```
 
   或者  
@@ -50,6 +50,15 @@ go env -w GO111MODULE=off
 * step2：goland里设置`Project GOPATH`为当前项目，在当前项目下创建bin、pkg、src这三个文件夹。
 
 完成上述步骤后，按照规定import包即可。
+
+**特点**：
+
+* 本项目和go get拉取的以来都放在 GOPATH/src 下，混在一起
+* 不同项目最好用不同GOPATH，以便区分。但这样又导致不同项目的依赖不能共用，需要各自拉取
+
+
+
+
 
 
 
@@ -77,13 +86,21 @@ https://www.cnblogs.com/wongbingming/p/12941021.html
   go env -w GO111MODULE=auto
   ```
 
-* step2：创建go mod项目即可。
+* step2：创建go mod项目即可。或者在项目目录下执行 go mod init <我的项目>，[具体见这里](https://mp.weixin.qq.com/s?__biz=MzUxMDI4MDc1NA==&mid=2247483713&idx=1&sn=817ffef56f8bc5ca09a325c9744e00c7&source=41#wechat_redirect)
 
 
 
 一个项目可以看做是一个module，里面有两个核心文件go.mod与go.sum。
 
+**特点**：
 
+* 自己项目随便放，不局限于GOPATH。通过go.mod文件指明引用的依赖
+* 拉取的依赖放在GOPATH/pkg/mod下
+* 不同项目依赖可以共用，因为依赖都是在GOPATH/pkg/mod下
+
+
+
+**注意**：go.mod 的 module格式为：< url>/projectDir , 否则自己跑没问题，但是不能被引用，因为引用时会按照< url>/projectDir下载，但是检查发现module不是这个的话报错
 
 
 
