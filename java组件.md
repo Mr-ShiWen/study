@@ -8,7 +8,7 @@
 
 ### 整体关系
 
-​		Log4j由三个重要的组成构成：日志记录器(Loggers)，输出端(Appenders)和日志格式化器(Layout)。
+Log4j由三个重要的组成构成：日志记录器(Loggers)，输出端(Appenders)和日志格式化器(Layout)。
 
 * 1.Logger：控制要启用或禁用哪些日志记录语句，并对日志信息进行级别限制
 
