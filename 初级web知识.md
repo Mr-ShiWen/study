@@ -3399,21 +3399,14 @@ abc.xml 配置文件内容如下：
 
 
 
-## ROOT的工程的访问，以及默认index.htm页面的访问
+## 默认访问资源
 
-当我们在浏览器地址栏中输入访问地址： http://ip:port/ 
+ 资源访问：http://ip:port/工程名/ 资源路径
 
-====>>>> 
+* 没有工程名的时候，默认访问的是 ROOT 工程
+* 没有资源名，默认访问 **index.xxx** 页面
 
-没有工程名的时候，默认访问的是 ROOT 工程里面的 **index.xxx**
-
-
-
-当我们在浏览器地址栏中输入的访问地址： http://ip:port/工程名/ 
-
-====>>>> 
-
-没有资源名，默认访问 **index.xxx** 页面
+如：http://ip:port/  等价于 http://ip:port/Root/ index.jsp
 
 
 
@@ -3423,11 +3416,11 @@ abc.xml 配置文件内容如下：
 
 操作的菜单如下：File | Settings | Build, Execution, Deployment | Application Servers
 
-![image-20201213160441219](http://typora-imges.oss-cn-beijing.aliyuncs.com/img/image-20201213160441219.png)
+![image-20201213160441219](/Users/sw/Desktop/image-20201213160441219.png)
 
 配置你的 Tomcat 安装目录：
 
-![image-20201213160640617](http://typora-imges.oss-cn-beijing.aliyuncs.com/img/image-20201213160640617.png)
+![image-20201213160640617](/Users/sw/Desktop/image-20201213160640617.png)
 
 就可以通过创建一个 Model 查看是不是配置成功！！！ 
 
@@ -3475,13 +3468,13 @@ abc.xml 配置文件内容如下：
 
 ### 四、在IDEA中部署工程到Tomcat上运行
 
-#### 1、建议修改 web 工程对应的 Tomcat 运行实例名称：
+#### 1、修改工程 Tomcat 实例名称
 
 ![image-20201213192640413](http://typora-imges.oss-cn-beijing.aliyuncs.com/img/image-20201213192640413.png)
 
 
 
-#### 2、确认你的 Tomcat 实例中有你要部署运行的 web 工程模块：
+#### 2、确认 Tomcat 实例有 web 工程
 
 在创建web工程时会指定一个tomcat实例，但运行该实例时可以自由设定需要运行的模块，不一定就是默认的模块（即创建时选择该tomcat实例的web工程模块）
 
@@ -5754,14 +5747,35 @@ out 也是给用户做输出使用的
 
 
 
-## Listener 监听器
+## 动态base标签
+
+​		base标签动态获取使得工程可以部署在不同的服务器上而不需要修改base标签，因为可以动态获取到本服务器上的工程路径，用这个路径作为base标签的路径
+
+```jsp
+<%
+    String basePath=request.getScheme()
+            + "://"
+            + request.getServerName()
+            + ":"
+            + request.getServerPort()
+            + request.getContextPath()
+            +"/"
+            ;
+%>
+
+<base href="<%=basePath%>">
+```
+
+
+
+# Listener 
 
 * 1、Listener 监听器它是 JavaWeb 的三大组件之一。JavaWeb 的三大组件分别是：Servlet 程序、Filter 过滤器、Listener 监听器
 
 * 2、Listener 它是 JavaEE 的规范，就是接口
 * 3、监听器的作用是，监听某种事物的变化。然后通过回调函数，反馈给客户（程序）去做一些相应的处理。
 
-### ServletContextListener 监听器
+## ServletContextListener 监听器
 
 ​	ServletContextListener 它可以监听 ServletContext 对象的创建和销毁。 
 
@@ -5823,27 +5837,6 @@ web.xml 中的配置
     <listener>
         <listener-class>com.atguigu.listener.MyServletContextListenerImpl</listener-class>
     </listener>
-```
-
-
-
-## 动态base标签
-
-​		base标签动态获取使得工程可以部署在不同的服务器上而不需要修改base标签，因为可以动态获取到本服务器上的工程路径，用这个路径作为base标签的路径
-
-```jsp
-<%
-    String basePath=request.getScheme()
-            + "://"
-            + request.getServerName()
-            + ":"
-            + request.getServerPort()
-            + request.getContextPath()
-            +"/"
-            ;
-%>
-
-<base href="<%=basePath%>">
 ```
 
 
@@ -7295,7 +7288,7 @@ Session 技术，底层其实是基于 Cookie 技术来实现的
 
 
 
-# Filter过滤器
+# Filter
 
 ## 定义
 
