@@ -1,109 +1,10 @@
-- [使用入门](#使用入门)
-- [配置（注解、xml）](#配置注解xml)
-- [IOC](#ioc)
-  - [基本概念](#基本概念)
-  - [底层原理](#底层原理)
-  - [BeanFactory 接口](#beanfactory-接口)
-  - [操作 Bean 管理](#操作-bean-管理)
-    - [基于xml的bean管理](#基于xml的bean管理)
-      - [bean创建](#bean创建)
-      - [属性注入](#属性注入)
-        - [一、 set 方法注入](#一-set-方法注入)
-        - [二、 有参构造函数注入](#二-有参构造函数注入)
-      - [属性注入其他类型值](#属性注入其他类型值)
-        - [一、字面量](#一字面量)
-        - [二、外部bean](#二外部bean)
-        - [三、内部bean](#三内部bean)
-        - [四、级联赋值](#四级联赋值)
-        - [五、注入集合](#五注入集合)
-      - [FactoryBean](#factorybean)
-      - [Bean作用域](#bean作用域)
-      - [Bean的生命周期](#bean的生命周期)
-        - [无后置处理器过程：](#无后置处理器过程)
-        - [有后置处理器过程：](#有后置处理器过程)
-      - [xml自动装配](#xml自动装配)
-      - [外部属性文件](#外部属性文件)
-    - [基于注解的bean管理](#基于注解的bean管理)
-      - [注解](#注解)
-      - [bean创建](#bean创建-1)
-      - [属性注入](#属性注入-1)
-        - [@Autowired：](#autowired)
-        - [@Qualifier：](#qualifier)
-        - [@Resource：](#resource)
-        - [@Value：](#value)
-      - [完全注解开发](#完全注解开发)
-- [AOP](#aop)
-  - [基本概念](#基本概念-1)
-  - [底层原理](#底层原理-1)
-    - [JDK动态代理](#jdk动态代理)
-    - [CGLIB动态代理](#cglib动态代理)
-    - [原理](#原理)
-  - [相关术语](#相关术语)
-    - [1、连接点](#1连接点)
-    - [2、切入点](#2切入点)
-    - [3、通知](#3通知)
-    - [4、切面](#4切面)
-  - [操作](#操作)
-    - [准备](#准备)
-    - [基于AspectJ的注解操作](#基于aspectj的注解操作)
-      - [1、创建被增强类](#1创建被增强类)
-      - [2、创建增强类（编写增强逻辑）](#2创建增强类编写增强逻辑)
-      - [3、进行xml配置](#3进行xml配置)
-      - [注意：](#注意)
-        - [通知的执行顺序](#通知的执行顺序)
-        - [相同切入点抽取](#相同切入点抽取)
-        - [一个通知多个切点](#一个通知多个切点)
-        - [增强类优先级](#增强类优先级)
-      - [完全注解开发](#完全注解开发-1)
-    - [基于AspectJ的xml操作](#基于aspectj的xml操作)
-    - [异同（注解式AOP、xml式AOP）](#异同注解式aopxml式aop)
-- [JdbcTemplate](#jdbctemplate)
-  - [概念](#概念)
-  - [准备](#准备-1)
-    - [1、引入相关依赖](#1引入相关依赖)
-    - [2、配置数据库连接池](#2配置数据库连接池)
-    - [3、配置 JdbcTemplate 对象，注入数据库连接池](#3配置-jdbctemplate-对象注入数据库连接池)
-    - [4、创建 service、 dao 类，在 dao 注入 JdbcTemplate 对象](#4创建-service-dao-类在-dao-注入-jdbctemplate-对象)
-  - [操作数据库](#操作数据库)
-    - [1、创建实体类](#1创建实体类)
-    - [2、编写 service 和 dao](#2编写-service-和-dao)
-    - [3、利用JdbcTemplate实现增删改查](#3利用jdbctemplate实现增删改查)
-      - [增删改](#增删改)
-      - [查](#查)
-        - [查询返回值（记录数）](#查询返回值记录数)
-        - [查询返回对象（一行数据）](#查询返回对象一行数据)
-        - [查询返回集合](#查询返回集合)
-        - [注意](#注意-1)
-      - [批量操作](#批量操作)
-        - [批量操作的方法函数](#批量操作的方法函数)
-        - [批量增](#批量增)
-        - [批量删](#批量删)
-        - [批量改](#批量改)
-    - [4、事务](#4事务)
-      - [非事务操作](#非事务操作)
-      - [事务管理](#事务管理)
-        - [Spring事务管理API](#spring事务管理api)
-        - [1、注解的声明式事务管理](#1注解的声明式事务管理)
-        - [2、完全注解的声明式事务管理](#2完全注解的声明式事务管理)
-        - [3、xml的声明式事务管理](#3xml的声明式事务管理)
-      - [@Transactional  注解的参数配置](#transactional--注解的参数配置)
-        - [1、propagation：事务传播行为](#1propagation事务传播行为)
-        - [2、isolation：隔离级别](#2isolation隔离级别)
-        - [3、timeout：超时时间](#3timeout超时时间)
-        - [4、readOnly：是否只读](#4readonly是否只读)
-        - [5、rollbackFor：回滚](#5rollbackfor回滚)
-        - [6、noRollbackFor：不回滚](#6norollbackfor不回滚)
-- [spring5 新功能](#spring5-新功能)
-  - [1、java8](#1java8)
-  - [2、日志](#2日志)
-  - [3、@Nullable 注解](#3nullable-注解)
-  - [4、函数式风格](#4函数式风格)
-  - [5、测试（JUnit5）](#5测试junit5)
-    - [（1）整合 JUnit4](#1整合-junit4)
-    - [（2）整合 JUnit5](#2整合-junit5)
-  - [6、Webflux（未完待续）](#6webflux未完待续)
-    - [1、SpringWebflux 介绍](#1springwebflux-介绍)
-    - [2、响应式编程](#2响应式编程)
+# Spring
+
+spring在容器中创建的bean是通过依赖注入才使得它们具有完整的结构。这样使得bean能够被复用，例如一个A类的bean与一个B类的bean可以依赖同一个C类的bean，而普通方式创建的话，它们是依赖不同的C类bean的。在用spring创建bean时，我们是通过注入一个完整的bean来创建另一个完整的bean的。与微服务的思想类似。
+
+
+
+普通方式创建bean，则其所有依赖也会被创建出来，可以认为其所有依赖的bean是本bean自身结构的一部分。每次创建普通bean都会创建其所有依赖。
 
 ## 使用入门
 
@@ -138,6 +39,7 @@ public class User {
     }
 }
 ```
+
 
 
 5、创建 Spring 配置文件，在配置文件配置创建的对象
@@ -211,6 +113,10 @@ spring有两种配置形式，即注解和xml。本质上都是配置，只是�
 ​	（3）做入门案例就是 IOC 实现
 
 ### 底层原理
+
+容器：创建所有的bean以及构造所有的依赖关系
+
+具体实现：每遍历一个类时，创建该类bean以及后续所有依赖的bean，并构造依赖关系。这可以通过递归实现。
 
  	主要技术：xml 解析、工厂模式、反射
 
@@ -851,7 +757,7 @@ xml配置
 
 ​				设置 scope 值是 singleton 时候，加载 spring 配置文件时候就会创建单实例对象。
 
- 				设置 scope 值是 prototype 时候，不是在加载 spring 配置文件时候创建 对象，在调用getBean 方法时候创建多实例对象。
+​				设置 scope 值是 prototype 时候，不是在加载 spring 配置文件时候创建 对象，在调用getBean 方法时候创建多实例对象。
 
 
 
@@ -922,7 +828,7 @@ xml配置（注意，初始化和销毁方法都需要配置）：
 
 ​		（2）为 bean 的属性设置值和对其他 bean 引用（调用 set 方法）
 
-   	 **（3.pre) 把 bean 实例传递 bean 后置处理器的方法 postProcessBeforeInitialization**
+ 		**（3.pre) 把 bean 实例传递 bean 后置处理器的方法 postProcessBeforeInitialization**
 
 ​		*（3）调用 bean 的初始化的方法（需要进行配置初始化的方法）*
 
@@ -1181,7 +1087,7 @@ public class UserService {
 
 
 
-注意，开启组件扫描的细节设置
+注意，组件扫描的细节设置
 
 ```xml
     <!--示例1
@@ -1203,9 +1109,11 @@ public class UserService {
 
 
 
+
+
 ##### 属性注入
 
-​		**通过注解进行属性注入不要 set 方法**
+​		**通过注解进行属性注入不需要 set 方法，因为底层是通过反射进行依赖注入的**
 
 ###### @Autowired：
 
@@ -1382,6 +1290,8 @@ public class UserService {
 
 
 
+
+
 ##### 完全注解开发
 
 （1）创建配置类，替代 xml 配置文件
@@ -1432,6 +1342,20 @@ public class TestSpring5Demo1 {
 
 
 
+**注意：**完全注解开发多了一种bean创建方式，那就是在配置类下，用 @Bean 标记方法，表示通过此方法创建一个bean，方法的参数可以是其他bean，按照bean名字来对应即可。
+
+
+
+### 扩展接口
+
+ioc容器提供了扩展接口给我们，使得在ioc容器创建所有bean完毕后，调用接口。bean可以实现这些接口。详见：
+
+https://blog.csdn.net/weixin_41627757/article/details/103802890
+
+https://www.jianshu.com/p/4bd3f68cb179
+
+
+
 ## AOP
 
 ### 基本概念
@@ -1443,6 +1367,12 @@ public class TestSpring5Demo1 {
 （3）使用登录例子说明 AOP。
 
 ![image-20210413211125699](http://typora-imges.oss-cn-beijing.aliyuncs.com/img/image-20210413211125699.png)
+
+
+
+### 大致实现
+
+ioc创建bean，增强bean里面有增强信息（切点+通知）。通过开启aspect来生成相应的代理bean，从而实现所描述的增强。
 
 
 
@@ -3055,6 +2985,317 @@ public class ObserverDemo extends Observable {
 
 
 
+
+# SpringMVC
+
+本质是基于 mvc 技术的servlet web应用，通过dispatcherServlet处理所有请求。
+
+另一个角度，我们也可以理解为通过tomcat来实现mvc。
+
+
+
+dispatcherServlet在创建后调用init时，利用spring创建bean（有些bean上面有url信息表明这是一个对应该url的handler），然后利用ioc里面的bean信息建立url到handler的映射。这是利用了sevlet提供的init扩展。
+
+
+
+也就是说servlet采用springMVC模式来实现相应的功能。
+
+
+
+感悟：servlet作为一个资源管理者去理解比作为一个资源去理解的适用范围更广。请求的是资源，servlet的url-pattern表示它管理的资源的路径。
+
+
+
+## 项目结构
+
+springMVC项目本质上是一个tomcat项目，结构如下：
+
+![SpringMVC 项目结构](http://typora-imges.oss-cn-beijing.aliyuncs.com/img/SpringMVC 项目结构.jpg)
+
+
+
+
+
+## 整体工作流程
+
+本质还是servlet，只是由 dispatcherServlet 处理所有的请求，具体的处理方法：
+
+  1、找到handler与对应的adapter
+
+  2、利用adapter调用handler，获取ModuleAndView对象
+
+  3、利用视图解析器解析出真正的View
+
+  4、把Module的数据填入View中，返回给客户端
+
+
+
+​		**总的来说，就是浏览器请求handler，dispatcherServlet找到相应handler后，执行（配合适配器，适配器主要是把handler的执行结果翻译成ModuleAndView的形式返回）得到ModuleAndView对象，并反回ModuleAndView对象所对应结果。**
+
+
+
+具体流程图如下：
+
+![img](http://typora-imges.oss-cn-beijing.aliyuncs.com/img/7896890-65ef874ad7da59a2.png)
+
+**DispatcherServlet与ioc容器的联系**：
+
+​    1、springmvc的ioc容器WebApplicationContext在DispatcherServlet初始化时建立。
+
+​    2、springmvc的ioc容器，会包含普通bean如controller，以及handler映射表。
+
+​    3、DispatcherServlet利用springmvc的ioc容器里面的bean做相应的初始化。
+
+
+
+入门教程：https://www.jianshu.com/p/91a2d0a1e45a
+
+DispatcherServlet具体工作流程：https://www.cnblogs.com/tengyunhao/p/7518481.html
+
+
+
+## Handler
+
+主要有以下几种：
+
+### 1、@RequestMapping
+
+一个方法作为一个handler。这是最常用的handler。实现上用一个HandlerMethod对象保存这个handler对象信息（包括Bean，以及相应的Method），HandlerMethod可以看做是这个Handler的指针。
+
+![requestmapping](http://typora-imges.oss-cn-beijing.aliyuncs.com/img/requestmapping.PNG)
+
+**该handler返回值的意义：**
+
+* 情况一：不使用@ResponseBody
+
+​	1、ModelAndView。返回该视图。
+
+​	2、String。返回viewName是该值的视图。
+
+​	3、void。不返回任何信息。
+
+* 情况二：使用@ResponseBody
+
+​	1、任意类型。返回该类型值的json字符串。
+
+
+
+### 2、Controller接口
+
+一个bean作为一个Handler
+
+![controller](http://typora-imges.oss-cn-beijing.aliyuncs.com/img/controller.PNG)
+
+
+
+### 3、HttpRequestHandler接口。
+一个bean作为一个Handler
+
+![httpRequestHandler](http://typora-imges.oss-cn-beijing.aliyuncs.com/img/httpRequestHandler.PNG)
+
+
+
+### 4、Servlet接口。
+
+一个bean作为一个Handler。<u>新版的springmvc已经不支持了，没有相应的adapter了。</u>
+
+
+
+handler：https://blog.csdn.net/wang0907/article/details/109154902
+
+handlerAdapter：https://blog.csdn.net/u013219087/article/details/80649654
+
+
+
+## HandlerAdapter
+
+handlerAdapter主要用来屏蔽不同handler的差异，对外界提供统一的处理接口。
+
+​	1、RequestMappingHandlerAdapter。用于配合method型的handler。
+
+​	2、SimpleControllerHandlerAdapter。用于配合Controller。
+
+​	3、HttpRequestHandlerAdapter。用于配合HttpRequestHandler。
+
+​	4、SimpleServletHandlerAdapter。用于配合Servlet，*新版SpringMvc不用了*。
+
+
+
+一般来说，如果没有自定义adapter，那默认加载三个adapter。
+
+如果有自定义adapter，那只加载自定义的adapter。因此，如果自定义adapter，那最好自定义所有需要的adapter。
+
+
+
+## Url到Handler映射的注册
+
+DiapatcherServlet利用spring创建bean后，需要建立HandlerMapping。建立url与handler的映射：
+
+​       遍历所有bean。每个bean，找出其所有名字（包括别名），对于以'/'开始的名字，认为是一个url，把该url与bean的映射保存即可。一个bean可以有多个url映射到它。
+
+​      所以，关键就是bean名字，一个'/'开头的名字认为是一个url，代表着一个handler。
+
+
+
+这里说的是普通handler，@RequestMapping也差不多，都是利用bean的信息寻找handler的。
+
+不同的地方是：
+
+​	普通handler直接是url到handler映射
+
+​	@RequestMapping则是url到HandlerMethod（可认为是handler指针）映射
+
+
+
+详见 AbstractDetectingUrlHandlerMapping 类的 detectHandlers() 方法。就是在这里建立url到handler的映射的。
+
+HandlerMethod的注册过程：https://www.bianchengquan.com/article/596660.html
+
+
+
+## 常见问题
+
+1、使用@ResponseBody但无法报500错误，显示**无法转换**为json。
+
+原因：对应的HandlerAdapter缺少转换器
+
+解决方法，自定义带有转换器的HandlerAdapter即可。
+
+第一步：pom.xml添加依赖
+
+```xml
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-core</artifactId>
+      <version>2.12.5</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-databind</artifactId>
+      <version>2.12.5</version>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+      <version>2.12.5</version>
+    </dependency>
+```
+
+第二步：注解方式，自定义adapter的bean，加入转换器
+
+```java
+@Component
+public class UtilBean {
+
+    @Bean
+    public MappingJackson2HttpMessageConverter getMappingJackson2HttpMessageConverter(){
+        MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter=new MappingJackson2HttpMessageConverter();
+        List<MediaType> supportedMediaTypes=new ArrayList<>();
+        supportedMediaTypes.add(MediaType.APPLICATION_JSON_UTF8);
+        supportedMediaTypes.add(MediaType.TEXT_HTML);
+        mappingJackson2HttpMessageConverter.setSupportedMediaTypes(supportedMediaTypes);
+        return mappingJackson2HttpMessageConverter;
+    }
+
+    @Bean
+    public StringHttpMessageConverter getStringHttpMessageConverter(){
+        StringHttpMessageConverter stringHttpMessageConverter=new StringHttpMessageConverter();
+        List<MediaType> supportedMediaTypes=new ArrayList<>();
+        supportedMediaTypes.add(MediaType.APPLICATION_JSON_UTF8);
+        supportedMediaTypes.add(MediaType.TEXT_HTML);
+        stringHttpMessageConverter.setSupportedMediaTypes(supportedMediaTypes);
+        return stringHttpMessageConverter;
+    }
+    
+        @Bean
+    public RequestMappingHandlerAdapter getRequestMappingHandlerAdapter(MappingJackson2HttpMessageConverter cv1,StringHttpMessageConverter cv2){
+        RequestMappingHandlerAdapter requestMappingHandlerAdapter=new RequestMappingHandlerAdapter();
+        List<HttpMessageConverter<?>> messageConverters=new ArrayList<>();
+        messageConverters.add(cv1);
+        messageConverters.add(cv2);
+        requestMappingHandlerAdapter.setMessageConverters(messageConverters);
+        return requestMappingHandlerAdapter;
+    }
+
+
+}
+```
+
+或者在dispatcher-servlet.xml里面创建自定义adapter，加入转换器
+
+```xml
+    <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
+        <property name="messageConverters">
+            <list>
+                <bean class="org.springframework.http.converter.StringHttpMessageConverter">
+                    <property name="supportedMediaTypes">
+                        <list>
+                            <value>text/html; charset=UTF-8</value>
+                            <value>application/json;charset=UTF-8</value>
+                        </list>
+                    </property>
+                </bean>
+                <bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+                    <property name="supportedMediaTypes">
+                        <list>
+                            <value>text/html; charset=UTF-8</value>
+                            <value>application/json;charset=UTF-8</value>
+                        </list>
+                    </property>
+                </bean>
+            </list>
+        </property>
+    </bean>
+```
+
+
+
+2、jsp的el表达式无法解析
+
+原因：idea创建的web工程的web.xml的问题，主要设计到起始标签和servlet版本
+
+解决办法：
+
+第一步：起始标签设为
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+```
+
+第二步：把servlet的版本改为更高，比如4.0
+
+```xml
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
+         version="4.0">
+
+</web-app>
+```
+
+
+
+参考：https://www.daimafans.com/article/d4344963293773824-p1-o1.html
+
+
+
+
+
+# SpringBoot
+
+由于前后端分离，大多数情况下，使用springBoot时，我们只需要返回数据就行，不需要返回整个页面。一般在@RequestMapping基础上加上@ResponseBody（如果类使用@RestController则不需要再加@ResponseBody了），使得handler返回json数据。
+
+
+
+springBoot启动web时，通过内置的tomcat来启动，启动的是springMVC项目（本质上是tomcat项目），这个项目估计也是内置的，我们只需要提供classes即可（需要在类上面加上注解来表示bean创建），运行端口与工程项目可以在application.properties里面配置。具体见：https://blog.csdn.net/u012100371/article/details/76409388。
+
+
+
+比如一棵树：
+
+spring时代：项目是树干，spring是树叶
+
+springboot时代：springboot是树干，项目是树叶
 
 
 
